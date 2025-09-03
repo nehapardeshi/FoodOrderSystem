@@ -2,7 +2,6 @@
 using FoodOrderSystem.Orders;
 
 using FoodOrderSystem.Repositories;
-using Microsoft.Extensions.Configuration.UserSecrets;
 using OrderStatus = FoodOrderSystem.Entities.Enums.OrderStatus;
 
 namespace FoodOrderSystem.Services
@@ -16,36 +15,29 @@ namespace FoodOrderSystem.Services
         {
             _orderRepository = orderRepository;
             _menuRepository = menuRepository;
-        }      
-        public async Task<int> AddOrderAsync(int customerID, DateTime deliveryDate, string deliveryAddress,  decimal serviceFee = 0)
-        {                         
+        }
+        public async Task<int> AddOrderAsync(int customerID, DateTime deliveryDate, string deliveryAddress, decimal serviceFee = 0)
+        {
             var order = new Order
             {
                 OrderDate = DateTime.Now,
                 OrderStatusId = 1,
-                CustomerId = customerID,               
+                CustomerId = customerID,
                 DeliveryDate = deliveryDate,
-                DeliveryAddress = deliveryAddress,               
+                DeliveryAddress = deliveryAddress,
                 ServiceFee = serviceFee,
-                
+
             };
             await _orderRepository.AddOrderAsync(order);
-            
-            var orders = await _orderRepository.GetOrdersByCustomerIdAsync(customerID);
-            if (orders.Count > 1)
-            {                
-                await AddOrderItemAsync(order.Id, 4, 1 );
-            }          
-
-            return order.Id;           
+            return order.Id;
         }
 
 
-       
+
         public async Task<int> AddOrderItemAsync(int orderId, int menuId, int quantity)
         {
             // Get Menu using menuId
-            var menu = await _menuRepository.GetMenuAsync(menuId)?? throw new Exception($"Menu not found with this id: {menuId}");
+            var menu = await _menuRepository.GetMenuAsync(menuId) ?? throw new Exception($"Menu not found with this id: {menuId}");
 
             var orderItem = new OrderItem
             {
@@ -58,13 +50,13 @@ namespace FoodOrderSystem.Services
             //use menu price from menu object
 
             await _orderRepository.AddOrderItemAsync(orderItem);
-            
+
             return orderItem.Id;
         }
 
         public async Task CalculateTotalOrderPriceAsync(int orderId)
         {
-            var order = await GetOrderAsync(orderId)?? throw new Exception($" Order not found with this id: {orderId}");
+            var order = await GetOrderAsync(orderId) ?? throw new Exception($" Order not found with this id: {orderId}");
             if (order != null && order.OrderItems.Count > 0)
             {
                 order.TotalPrice = order.OrderItems.Sum(o => o.MenuPrice * o.Quantity);
@@ -74,26 +66,26 @@ namespace FoodOrderSystem.Services
         }
         public async Task<OrderItem> GetOrderItemAsync(int orderId, int orderItemId)
         {
-            var ordItem = await _orderRepository.GetOrderItemAsync(orderItemId)?? throw new Exception($"OrderItem not found with this id:{orderItemId}");
+            var ordItem = await _orderRepository.GetOrderItemAsync(orderItemId) ?? throw new Exception($"OrderItem not found with this id:{orderItemId}");
             return ordItem;
 
         }
 
-        public async Task<OrderItem> UpdateOrderItemAsync (int orderID, int orderItemId, int quantity)
+        public async Task<OrderItem> UpdateOrderItemAsync(int orderID, int orderItemId, int quantity)
         {
-           var ordItem = await _orderRepository.GetOrderItemAsync (orderItemId) ?? throw new Exception($"OrderItem not found with this id: {orderItemId}");
+            var ordItem = await _orderRepository.GetOrderItemAsync(orderItemId) ?? throw new Exception($"OrderItem not found with this id: {orderItemId}");
             ordItem.Quantity = quantity;
             await CalculateTotalOrderPriceAsync(orderID);
 
-            await _orderRepository.UpdateOrderItemAsync(ordItem);                     
+            await _orderRepository.UpdateOrderItemAsync(ordItem);
             return ordItem;
         }
 
         public async Task<Order> CancelOrderAsync(int id)
         {
             var order = await _orderRepository.GetOrderAsync(id) ?? throw new Exception($" Order not found with this id: {id}");
-            
-            if(order.OrderStatusId == 5)
+
+            if (order.OrderStatusId == 5)
             {
                 Console.WriteLine($"This order can not be cancelled : {id}");
             }
@@ -101,24 +93,18 @@ namespace FoodOrderSystem.Services
             return order;
         }
 
-       
-
         public async Task<Order> GetOrderAsync(int id)
         {
-            var order = await _orderRepository.GetOrderAsync(id)?? throw new Exception($" Order not found with this id: {id}");            
+            var order = await _orderRepository.GetOrderAsync(id) ?? throw new Exception($" Order not found with this id: {id}");
             return order;
-           
+
         }
         public async Task DeleteOrderItemAsync(int orderId, int orderItemId)
         {
             await _orderRepository.GetOrderItemAsync(orderItemId);
             await _orderRepository.DeleteOrderItemAsync(orderId, orderItemId);
             await CalculateTotalOrderPriceAsync(orderId);
-  
-            
         }
-
-
 
         public async Task<Order> UpdateOrderAsync(int orderId, DateTime deliveryDate, string deliveryAddress)
         {
@@ -135,32 +121,32 @@ namespace FoodOrderSystem.Services
             await _orderRepository.DeleteOrderAsync(ord);
         }
 
-        public async Task UpdateOrderStatusAsync (int orderId, OrderStatus orderStatus)
+        public async Task UpdateOrderStatusAsync(int orderId, OrderStatus orderStatus)
         {
             var order = await _orderRepository.GetOrderAsync(orderId) ?? throw new Exception($"Order not found with this id: {orderId}");
-                                
+
             if (order.OrderStatusId == (int)orderStatus)
                 return;
 
-            
-                if (
-                    (order.OrderStatusId == (int)(OrderStatus.Created) && (orderStatus == OrderStatus.Accepted || orderStatus == OrderStatus.Canceled)) ||
-                    (order.OrderStatusId == (int)(OrderStatus.Accepted) && (orderStatus == OrderStatus.Canceled || orderStatus == OrderStatus.Paid)) ||
-                    (order.OrderStatusId == (int)(OrderStatus.Paid) && (orderStatus == OrderStatus.Canceled || orderStatus == OrderStatus.Delivered))
-                   )
-                {
-                    order.OrderStatusId = (int)orderStatus;
-                    await _orderRepository.UpdateOrderAsync(order);
-                    return;
-                }
-                else
-                {
-                    throw new Exception($"This order status can not be changed: {orderId}");
-               
-                }
 
-                
-            
+            if (
+                (order.OrderStatusId == (int)(OrderStatus.Created) && (orderStatus == OrderStatus.Accepted || orderStatus == OrderStatus.Canceled)) ||
+                (order.OrderStatusId == (int)(OrderStatus.Accepted) && (orderStatus == OrderStatus.Canceled || orderStatus == OrderStatus.Paid)) ||
+                (order.OrderStatusId == (int)(OrderStatus.Paid) && (orderStatus == OrderStatus.Canceled || orderStatus == OrderStatus.Delivered))
+               )
+            {
+                order.OrderStatusId = (int)orderStatus;
+                await _orderRepository.UpdateOrderAsync(order);
+                return;
+            }
+            else
+            {
+                throw new Exception($"This order status can not be changed: {orderId}");
+
+            }
+
+
+
 
         }
     }

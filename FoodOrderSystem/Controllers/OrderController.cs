@@ -1,5 +1,4 @@
-﻿using FoodOrderSystem.Entities;
-using FoodOrderSystem.Models;
+﻿using FoodOrderSystem.Models;
 using FoodOrderSystem.Services;
 using Microsoft.AspNetCore.Mvc;
 using OrderStatus = FoodOrderSystem.Entities.Enums.OrderStatus;
@@ -26,8 +25,8 @@ namespace FoodOrderSystem.Controllers
             {
                 await _orderService.AddOrderItemAsync(orderId, orderItem.MenuId, orderItem.Quantity);
             }
-            
-            // Calculate Order Amount (order>Id)
+
+            //TODO Calculate Order Amount (order>Id)
 
             return Ok(orderId);
         }
@@ -39,6 +38,7 @@ namespace FoodOrderSystem.Controllers
             var orderItemId = await _orderService.AddOrderItemAsync(orderId, request.MenuId, request.Quantity);
             return Ok(orderItemId);
         }
+
         [HttpGet]
         [Route("{orderId}")]
         public async Task<IActionResult> GetOrderAsync([FromRoute] int orderId)
@@ -60,19 +60,18 @@ namespace FoodOrderSystem.Controllers
             order = await _orderService.UpdateOrderAsync(orderId, request.DeliveryDate, request.DeliveryAddress);
             return Ok(order);
         }
+
         [HttpPut]
         [Route("{orderId}/OrderStatus/{orderStatus}")]
         public async Task<IActionResult> UpdateOrderStatusAsync(int orderId, string orderStatus)
         {
-            if(Enum.TryParse(orderStatus, out OrderStatus status))
+            if (Enum.TryParse(orderStatus, out OrderStatus status))
             {
                 await _orderService.UpdateOrderStatusAsync(orderId, status);
 
                 return Ok();
             }
             return BadRequest(status);
-
-            
         }
 
         [HttpDelete]
@@ -91,6 +90,7 @@ namespace FoodOrderSystem.Controllers
 
             return Ok(updatedOrdItem);
         }
+
         [HttpDelete]
         [Route("{orderId}/order-items/{orderItemId}")]
         public async Task<IActionResult> DeleteOrderItemAsync(int orderId, int orderItemId)

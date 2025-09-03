@@ -1,3 +1,4 @@
+using FoodOrderSystem.Orders;
 using FoodOrderSystem.Repositories;
 using FoodOrderSystem.Services;
 using NSubstitute;
@@ -13,32 +14,37 @@ namespace FoodOrderSystemTest
 
         public OrderServiceTest()
         {
-           _menuRepository = Substitute.For<IMenuRepository>();
+            // Mocking
+            _menuRepository = Substitute.For<IMenuRepository>();
             _orderRepository = Substitute.For<IOrderRepository>();
+            _menuRepository = Substitute.For<IMenuRepository>();
+
             _menuService = new MenuService(_menuRepository);
             _orderService = new OrderService(_orderRepository, _menuRepository);
-            
-            _menuRepository = Substitute.For<IMenuRepository>();
+
         }
         [Fact]
-        public async Task AddOrderTestAsync()
+        public async Task GetOrderTestAsync()
         {
             // Arrange
-            var OrderDate = DateTime.Now;
+            var orderDate = DateTime.Now;
             var expectedOrderStatus = 1;
-            var CustomerId = 6;               
-            var DeliveryDate = DateTime.Now;
-            var DeliveryAddress = "Solbergskolen";
-            var ServiceFee = 0;
+            var customerId = 12;
+            var orderId = 1;
+            var expectedOrder = new Order { Id = orderId, CustomerId = customerId, OrderDate = orderDate, OrderStatusId = expectedOrderStatus };
+
+            // Configure the mock to return a specific order when GetOrderAsync is called with the given order ID
+            _orderRepository.GetOrderAsync(orderId).Returns(expectedOrder);
 
             // Act
-            var order = await _orderService.AddOrderAsync(CustomerId, DeliveryDate, DeliveryAddress, ServiceFee);
+            var order = await _orderService.GetOrderAsync(orderId);
 
             //Assert
             Assert.NotNull(order);
-            Assert.Equal(expectedOrderStatus, order.orderStatus);
-            Assert.Equal(CustomerId, order.)
-
+            Assert.Equal(orderId, order.Id);
+            Assert.Equal(expectedOrderStatus, order.OrderStatusId);
+            Assert.Equal(customerId, order.CustomerId);
+            Assert.Equal(orderDate, order.OrderDate);
         }
     }
 }
