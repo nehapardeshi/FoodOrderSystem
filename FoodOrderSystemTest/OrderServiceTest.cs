@@ -9,7 +9,6 @@ namespace FoodOrderSystemTest
     {
         private readonly IOrderService _orderService;
         private readonly IOrderRepository _orderRepository;
-        private readonly IMenuService _menuService;
         private readonly IMenuRepository _menuRepository;
 
         public OrderServiceTest()
@@ -19,7 +18,6 @@ namespace FoodOrderSystemTest
             _orderRepository = Substitute.For<IOrderRepository>();
             _menuRepository = Substitute.For<IMenuRepository>();
 
-            _menuService = new MenuService(_menuRepository);
             _orderService = new OrderService(_orderRepository, _menuRepository);
 
         }
